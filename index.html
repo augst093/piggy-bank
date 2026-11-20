@@ -75,6 +75,47 @@
   .glist button.cur span:first-child{text-decoration:underline;text-underline-offset:4px}
   .links{display:flex;gap:16px;justify-content:center;margin-top:10px}
   .links button{color:var(--dim);font-weight:700;font-size:14px;padding:6px}
+
+  /* ---------- animations ---------- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{opacity:0;transform:scale(.8) rotate(-8deg)}to{opacity:1;transform:none}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-28px) scale(.98);background:#1f1f1f}to{opacity:1;transform:none}}
+  @keyframes slideOut{to{opacity:0;transform:translateX(60px);height:0;padding:0;border-width:0}}
+  @keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+  @keyframes glow{0%,100%{filter:drop-shadow(0 0 2px #fff)}50%{filter:drop-shadow(0 0 14px #fff)}}
+  @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .top{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) both}
+  .hero{animation:pop .8s cubic-bezier(.2,.9,.3,1.2) .08s both}
+  .stats{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) .25s both}
+  .actions{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) .33s both}
+  .list h3{animation:fadeUp .6s cubic-bezier(.2,.8,.2,1) .4s both}
+  .links{animation:fadeUp .6s ease .6s both}
+  .empty{animation:fadeUp .6s ease .5s both}
+  .empty b{display:inline-block;font-size:34px;animation:floaty 2.4s ease-in-out infinite}
+  .row.in{animation:fadeUp .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(.45s + var(--i) * .06s)}
+  .row.new{animation:slideIn .55s cubic-bezier(.2,.9,.3,1) both}
+  .row.out{animation:slideOut .3s ease forwards;overflow:hidden}
+  .bump{display:inline-block;animation:bump .45s cubic-bezier(.3,1.6,.5,1)}
+  b.bump{display:block;transform-origin:left}
+  .stats div:last-child b.bump{transform-origin:right}
+  .done .ring{animation:glow 2.2s ease-in-out infinite}
+  .shake{animation:shake .35s}
+  button{transition:transform .15s cubic-bezier(.3,1.5,.5,1),opacity .15s}
+  button:active{transform:scale(.94)}
+  .goalbtn svg{transition:transform .3s}
+  .goalbtn.open svg{transform:rotate(180deg)}
+  .icon:active{transform:scale(.88) rotate(-12deg)}
+  .sheet.on>*{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both}
+  .sheet.on>*:nth-child(1){animation-delay:.08s}.sheet.on>*:nth-child(2){animation-delay:.14s}
+  .sheet.on>*:nth-child(3){animation-delay:.2s}.sheet.on>*:nth-child(4){animation-delay:.26s}
+  .sheet.on>*:nth-child(5){animation-delay:.32s}
+  input{transition:border-color .2s,transform .2s,box-shadow .2s}
+  input:focus{transform:scale(1.015);box-shadow:0 0 0 3px rgba(255,255,255,.18)}
+  .glist button{transition:padding-left .25s,transform .15s}
+  .glist button:active{padding-left:10px;transform:none}
+  .conf{position:fixed;top:0;left:0;width:9px;height:14px;z-index:20;pointer-events:none;border-radius:2px}
+  @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -130,33 +171,88 @@ const fmt = (n, cur) => {
   return s.toLocaleString('ru-RU', { maximumFractionDigits: 2 }).replace(/ /g, ' ') + ' ' + cur;
 };
 
+let prev = { pct: 0, saved: 0, left: 0, id: null, done: false };
+let newId = null;
+
+function tween(el, from, to, dur, f){
+  cancelAnimationFrame(el._r);
+  if (from === to) { el.textContent = f(to); return; }
+  const t0 = performance.now();
+  const step = t => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+    el.textContent = f(from + (to - from) * e);
+    if (k < 1) el._r = requestAnimationFrame(step);
+  };
+  el._r = requestAnimationFrame(step);
+}
+function bump(el){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+
 function render(){
-  const g = goal(), saved = sum(g);
+  const g = goal(), saved = sum(g), left = Math.max(0, g.target - saved);
   const p = g.target > 0 ? Math.max(0, Math.min(1, saved / g.target)) : 0;
+  const pct = Math.floor(p * 100), done = p >= 1;
+  const first = prev.id === null, switched = !first && prev.id !== g.id;
+  const changed = !first && !switched;
+
   $('#gname').textContent = g.name;
-  $('#pct').textContent = Math.floor(p * 100);
-  $('#sub').textContent = p >= 1 ? 'Цель достигнута 🎉' : 'из ' + fmt(g.target, g.cur);
-  $('#saved').textContent = fmt(saved, g.cur);
-  $('#left').textContent = fmt(Math.max(0, g.target - saved), g.cur);
+  if (switched) { $('#hero').style.animation = 'none'; void $('#hero').offsetWidth; $('#hero').style.animation = 'pop .6s cubic-bezier(.2,.9,.3,1.2) both'; }
+  $('#sub').textContent = done ? 'Цель достигнута 🎉' : 'из ' + fmt(g.target, g.cur);
+
+  const from = first || switched ? { pct: 0, saved: 0, left: g.target } : prev;
+  tween($('#pct'), from.pct, pct, 1100, v => Math.floor(v));
+  tween($('#saved'), from.saved, saved, 1100, v => fmt(v, g.cur));
+  tween($('#left'), from.left, left, 1100, v => fmt(v, g.cur));
+  if (changed) {
+    if (pct !== prev.pct) bump($('#pct'));
+    if (saved !== prev.saved) { bump($('#saved')); bump($('#left')); }
+  }
+
   const fg = $('#fg');
   fg.style.strokeDasharray = C;
-  fg.style.strokeDashoffset = C * (1 - p);
-  $('#hero').classList.toggle('done', p >= 1);
+  if (first || switched) {
+    fg.style.transition = 'none'; fg.style.strokeDashoffset = C; void fg.getBoundingClientRect();
+    fg.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)';
+  }
+  requestAnimationFrame(() => { fg.style.strokeDashoffset = C * (1 - p); });
+  $('#hero').classList.toggle('done', done);
+  if (done && !prev.done && changed) confetti();
 
-  const h = $('#hist');
-  if (!g.tx.length) { h.innerHTML = '<div class="empty">Пока пусто. Начни с первого взноса.</div>'; return; }
-  h.innerHTML = [...g.tx].reverse().map(t => `
-    <div class="row" data-id="${t.id}">
-      <div>${t.note ? esc(t.note) : (t.amt >= 0 ? 'Пополнение' : 'Снятие')}
-        <small>${new Date(t.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</small></div>
-      <div class="a ${t.amt < 0 ? 'neg' : ''}">${t.amt > 0 ? '+' : '−'}${fmt(Math.abs(t.amt), g.cur)}</div>
-    </div>`).join('');
+  const h = $('#hist'), anim = first || switched;
+  if (!g.tx.length) {
+    h.innerHTML = '<div class="empty"><b>🐷</b><br>Пока пусто. Начни с первого взноса.</div>';
+  } else {
+    h.innerHTML = [...g.tx].reverse().map((t, i) => `
+      <div class="row ${t.id === newId ? 'new' : anim ? 'in' : ''}" style="--i:${i}" data-id="${t.id}">
+        <div>${t.note ? esc(t.note) : (t.amt >= 0 ? 'Пополнение' : 'Снятие')}
+          <small>${new Date(t.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</small></div>
+        <div class="a ${t.amt < 0 ? 'neg' : ''}">${t.amt > 0 ? '+' : '−'}${fmt(Math.abs(t.amt), g.cur)}</div>
+      </div>`).join('');
+  }
+  newId = null;
+  prev = { pct, saved, left, id: g.id, done };
+}
+
+function confetti(){
+  const cols = ['#fff', '#30e060', '#fff', '#ff3b30'];
+  for (let i = 0; i < 60; i++) {
+    const d = document.createElement('div'); d.className = 'conf';
+    d.style.background = cols[i % cols.length];
+    document.body.appendChild(d);
+    const x0 = innerWidth / 2, y0 = innerHeight * .38, a = Math.random() * Math.PI * 2, v = 120 + Math.random() * 260;
+    d.animate([
+      { transform: `translate(${x0}px,${y0}px) rotate(0)`, opacity: 1 },
+      { transform: `translate(${x0 + Math.cos(a) * v}px,${y0 + Math.sin(a) * v - 80}px) rotate(${Math.random() * 540}deg)`, opacity: 1, offset: .45 },
+      { transform: `translate(${x0 + Math.cos(a) * v * 1.2}px,${y0 + Math.sin(a) * v + 420}px) rotate(${Math.random() * 900}deg)`, opacity: 0 }
+    ], { duration: 1600 + Math.random() * 600, easing: 'cubic-bezier(.2,.6,.4,1)' }).onfinish = () => d.remove();
+  }
+  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* sheets */
-function open(html){ $('#sheet').innerHTML = html; $('#shade').classList.add('on'); $('#sheet').classList.add('on'); }
-function close(){ $('#shade').classList.remove('on'); $('#sheet').classList.remove('on'); document.activeElement.blur(); }
+function open(html){ $('#sheet').classList.remove('on'); void $('#sheet').offsetWidth; $('#sheet').innerHTML = html; $('#shade').classList.add('on'); $('#sheet').classList.add('on'); }
+function close(){ $('#shade').classList.remove('on'); $('#sheet').classList.remove('on'); $('#switch').classList.remove('open'); document.activeElement.blur(); }
+const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); el.focus(); };
 $('#shade').onclick = close;
 const num = v => parseFloat(String(v).replace(/\s/g, '').replace(',', '.'));
 
@@ -169,8 +265,9 @@ function moneySheet(sign){
   setTimeout(() => $('#amt').focus(), 320);
   $('#ok').onclick = () => {
     const v = num($('#amt').value);
-    if (!(v > 0)) return $('#amt').focus();
-    g.tx.push({ id: uid(), amt: sign * v, date: Date.now(), note: $('#note').value.trim() });
+    if (!(v > 0)) return shake($('#amt'));
+    const id = uid(); newId = id;
+    g.tx.push({ id, amt: sign * v, date: Date.now(), note: $('#note').value.trim() });
     save(); render(); close();
     if (navigator.vibrate) navigator.vibrate(10);
   };
@@ -186,8 +283,8 @@ function goalForm(g){
     ${!isNew && S.goals.length > 1 ? '<button class="btn danger" id="del">Удалить цель</button>' : ''}`);
   $('#ok').onclick = () => {
     const name = $('#n').value.trim(), target = num($('#t').value), cur = $('#c').value.trim() || '$';
-    if (!name) return $('#n').focus();
-    if (!(target > 0)) return $('#t').focus();
+    if (!name) return shake($('#n'));
+    if (!(target > 0)) return shake($('#t'));
     if (isNew) { const ng = { id: uid(), name, target, cur, tx: [] }; S.goals.push(ng); S.active = ng.id; }
     else Object.assign(g, { name, target, cur });
     save(); render(); close();
@@ -200,6 +297,7 @@ function goalForm(g){
 }
 
 function switchSheet(){
+  $('#switch').classList.add('open');
   open(`<h2>Цели</h2><div class="glist">${S.goals.map(g =>
     `<button data-id="${g.id}" class="${g.id === S.active ? 'cur' : ''}"><span>${esc(g.name)}</span><span>${Math.floor(Math.min(1, sum(g) / g.target) * 100)}%</span></button>`).join('')}</div>
     <button class="btn ghost" id="new" style="margin-top:14px">+ Новая цель</button>`);
@@ -213,7 +311,7 @@ $('#edit').onclick = () => goalForm(goal());
 $('#switch').onclick = switchSheet;
 $('#hist').onclick = e => {
   const r = e.target.closest('.row'); if (!r) return;
-  if (confirm('Удалить эту запись?')) { const g = goal(); g.tx = g.tx.filter(t => t.id !== r.dataset.id); save(); render(); }
+  if (confirm('Удалить эту запись?')) { r.classList.add('out'); setTimeout(() => { const g = goal(); g.tx = g.tx.filter(t => t.id !== r.dataset.id); save(); render(); }, 280); }
 };
 
 /* backup */
