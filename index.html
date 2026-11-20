@@ -143,7 +143,7 @@
   </div>
 
   <div class="list"><h3>История</h3><div id="hist"></div></div>
-  <div class="links"><button id="exp">Экспорт</button><button id="imp">Импорт</button></div>
+  <div class="links"><button id="snd"></button><button id="exp">Экспорт</button><button id="imp">Импорт</button></div>
 </div>
 
 <div class="shade" id="shade"></div>
@@ -155,6 +155,51 @@ const $ = s => document.querySelector(s);
 const KEY = 'piggy.v1';
 const uid = () => Math.random().toString(36).slice(2, 9);
 const C = 2 * Math.PI * 54;
+
+/* ---------- sound + haptics ---------- */
+const FX = (() => {
+  let ctx, on = localStorage.getItem('piggy.sound') !== '0';
+  // iOS Safari has no navigator.vibrate; toggling a hidden <input switch> gives a haptic tap (iOS 17.4+)
+  const lab = document.createElement('label');
+  lab.style.cssText = 'position:fixed;left:-120px;top:0;opacity:0;pointer-events:none';
+  lab.innerHTML = '<input type="checkbox" switch>';
+  document.body.appendChild(lab);
+
+  const unlock = () => {
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state !== 'running') ctx.resume();
+    } catch {}
+  };
+  addEventListener('pointerdown', unlock, { passive: true });
+
+  function haptic(taps = 1, gap = 75){
+    if (navigator.vibrate) { navigator.vibrate(Array.from({ length: taps * 2 - 1 }, (_, i) => i % 2 ? gap - 15 : 15)); return; }
+    for (let i = 0; i < taps; i++) setTimeout(() => lab.click(), i * gap);
+  }
+  function tone(f, t = 0, d = .12, type = 'sine', v = .15, to){
+    if (!on || !ctx) return;
+    const t0 = ctx.currentTime + t, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + d);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(v, t0 + .008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+    o.connect(g).connect(ctx.destination); o.start(t0); o.stop(t0 + d + .02);
+  }
+  return {
+    get on(){ return on; },
+    toggle(){ on = !on; localStorage.setItem('piggy.sound', on ? '1' : '0'); unlock(); if (on) this.ok(); return on; },
+    tap(){ tone(1400, 0, .035, 'triangle', .05); haptic(1); },
+    open(){ tone(520, 0, .09, 'sine', .07, 760); },
+    ok(){ tone(660, 0, .09, 'triangle', .1); tone(990, .08, .14, 'triangle', .1); haptic(1); },
+    deposit(){ tone(988, 0, .08, 'square', .06); tone(1319, .07, .26, 'square', .06); tone(1976, .07, .26, 'sine', .05); haptic(2, 80); },
+    withdraw(){ tone(520, 0, .1, 'triangle', .12, 440); tone(330, .09, .22, 'triangle', .12, 220); haptic(1); },
+    del(){ tone(300, 0, .16, 'sawtooth', .05, 90); haptic(1); },
+    error(){ tone(150, 0, .09, 'square', .07); tone(150, .12, .09, 'square', .07); haptic(3, 60); },
+    win(){ [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, i * .09, .3, 'triangle', .1)); haptic(4, 90); }
+  };
+})();
 
 let S = load() || {
   active: null,
@@ -245,12 +290,12 @@ function confetti(){
       { transform: `translate(${x0 + Math.cos(a) * v * 1.2}px,${y0 + Math.sin(a) * v + 420}px) rotate(${Math.random() * 900}deg)`, opacity: 0 }
     ], { duration: 1600 + Math.random() * 600, easing: 'cubic-bezier(.2,.6,.4,1)' }).onfinish = () => d.remove();
   }
-  if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+  FX.win();
 }
 const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /* sheets */
-function open(html){ $('#sheet').classList.remove('on'); void $('#sheet').offsetWidth; $('#sheet').innerHTML = html; $('#shade').classList.add('on'); $('#sheet').classList.add('on'); }
+function open(html){ FX.open(); $('#sheet').classList.remove('on'); void $('#sheet').offsetWidth; $('#sheet').innerHTML = html; $('#shade').classList.add('on'); $('#sheet').classList.add('on'); }
 function close(){ $('#shade').classList.remove('on'); $('#sheet').classList.remove('on'); $('#switch').classList.remove('open'); document.activeElement.blur(); }
 const shake = el => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); el.focus(); };
 $('#shade').onclick = close;
@@ -265,11 +310,11 @@ function moneySheet(sign){
   setTimeout(() => $('#amt').focus(), 320);
   $('#ok').onclick = () => {
     const v = num($('#amt').value);
-    if (!(v > 0)) return shake($('#amt'));
+    if (!(v > 0)) { FX.error(); return shake($('#amt')); }
     const id = uid(); newId = id;
     g.tx.push({ id, amt: sign * v, date: Date.now(), note: $('#note').value.trim() });
     save(); render(); close();
-    if (navigator.vibrate) navigator.vibrate(10);
+    sign > 0 ? FX.deposit() : FX.withdraw();
   };
 }
 
@@ -283,16 +328,16 @@ function goalForm(g){
     ${!isNew && S.goals.length > 1 ? '<button class="btn danger" id="del">Удалить цель</button>' : ''}`);
   $('#ok').onclick = () => {
     const name = $('#n').value.trim(), target = num($('#t').value), cur = $('#c').value.trim() || '$';
-    if (!name) return shake($('#n'));
-    if (!(target > 0)) return shake($('#t'));
+    if (!name) { FX.error(); return shake($('#n')); }
+    if (!(target > 0)) { FX.error(); return shake($('#t')); }
     if (isNew) { const ng = { id: uid(), name, target, cur, tx: [] }; S.goals.push(ng); S.active = ng.id; }
     else Object.assign(g, { name, target, cur });
-    save(); render(); close();
+    save(); render(); close(); FX.ok();
   };
   if ($('#del')) $('#del').onclick = () => {
     if (!confirm('Удалить цель «' + g.name + '» вместе с историей?')) return;
     S.goals = S.goals.filter(x => x.id !== g.id); S.active = S.goals[0].id;
-    save(); render(); close();
+    save(); render(); close(); FX.del();
   };
 }
 
@@ -301,7 +346,7 @@ function switchSheet(){
   open(`<h2>Цели</h2><div class="glist">${S.goals.map(g =>
     `<button data-id="${g.id}" class="${g.id === S.active ? 'cur' : ''}"><span>${esc(g.name)}</span><span>${Math.floor(Math.min(1, sum(g) / g.target) * 100)}%</span></button>`).join('')}</div>
     <button class="btn ghost" id="new" style="margin-top:14px">+ Новая цель</button>`);
-  document.querySelectorAll('.glist button').forEach(b => b.onclick = () => { S.active = b.dataset.id; save(); render(); close(); });
+  document.querySelectorAll('.glist button').forEach(b => b.onclick = () => { S.active = b.dataset.id; save(); render(); close(); FX.ok(); });
   $('#new').onclick = () => goalForm(null);
 }
 
@@ -311,7 +356,7 @@ $('#edit').onclick = () => goalForm(goal());
 $('#switch').onclick = switchSheet;
 $('#hist').onclick = e => {
   const r = e.target.closest('.row'); if (!r) return;
-  if (confirm('Удалить эту запись?')) { r.classList.add('out'); setTimeout(() => { const g = goal(); g.tx = g.tx.filter(t => t.id !== r.dataset.id); save(); render(); }, 280); }
+  if (confirm('Удалить эту запись?')) { FX.del(); r.classList.add('out'); setTimeout(() => { const g = goal(); g.tx = g.tx.filter(t => t.id !== r.dataset.id); save(); render(); }, 280); }
 };
 
 /* backup */
@@ -332,6 +377,9 @@ $('#file').onchange = async e => {
   e.target.value = '';
 };
 
+document.addEventListener('pointerdown', e => { if (e.target.closest('button') && !e.target.closest('#snd')) FX.tap(); }, { passive: true });
+const sndBtn = $('#snd'); const sndLabel = () => sndBtn.textContent = 'Звук: ' + (FX.on ? 'вкл' : 'выкл');
+sndBtn.onclick = () => { FX.toggle(); sndLabel(); }; sndLabel();
 render();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 </script>
