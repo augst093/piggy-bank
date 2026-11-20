@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<meta name="theme-color" content="#0b0b0c">
+<meta name="theme-color" content="#000000">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,8 +13,8 @@
 <title>Копилка</title>
 <style>
   :root{
-    --bg:#0b0b0c; --card:#161618; --line:#232326; --txt:#f5f5f7; --dim:#8e8e93;
-    --acc:#7cf5b4; --red:#ff6b6b;
+    --bg:#000; --card:#1a1a1a; --line:#3a3a3a; --txt:#fff; --dim:#b3b3b3;
+    --acc:#fff; --red:#ff3b30; --grn:#30e060;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
@@ -27,11 +27,11 @@
   .goalbtn{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:600;padding:8px 0;max-width:75%}
   .goalbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .goalbtn svg{flex:none;opacity:.5}
-  .icon{width:40px;height:40px;border-radius:20px;background:var(--card);display:grid;place-items:center;color:var(--dim)}
+  .icon{width:40px;height:40px;border-radius:20px;background:var(--card);display:grid;place-items:center;color:#fff}
   .hero{display:grid;place-items:center;padding:28px 0 8px;position:relative}
   .ring{width:260px;height:260px;transform:rotate(-90deg)}
   .ring circle{fill:none;stroke-width:10;stroke-linecap:round}
-  .ring .bg{stroke:var(--card)}
+  .ring .bg{stroke:#2a2a2a}
   .ring .fg{stroke:var(--acc);transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
   .center{position:absolute;text-align:center;top:50%;left:50%;transform:translate(-50%,-44%)}
   .pct{font-size:54px;font-weight:700;letter-spacing:-2px;line-height:1}
@@ -42,21 +42,22 @@
   .stats div:last-child{text-align:right}
   .actions{display:flex;gap:10px;margin:18px 0 22px}
   .actions button{flex:1;height:54px;border-radius:16px;font-size:17px;font-weight:600}
-  .add{background:var(--acc);color:#04170d}
-  .sub-btn{background:var(--card)}
+  .add{background:#fff;color:#000}
+  .sub-btn{background:#000;border:2px solid #fff}
   .add:active,.sub-btn:active{transform:scale(.97)}
   h3{margin:0 0 6px;font-size:13px;font-weight:500;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
   .list{flex:1}
   .row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
   .row small{display:block;color:var(--dim);font-size:13px;margin-top:2px}
   .row .a{font-weight:600;font-variant-numeric:tabular-nums}
+  .row .a{color:var(--grn)}
   .row .a.neg{color:var(--red)}
   .empty{color:var(--dim);text-align:center;padding:36px 0;font-size:15px}
-  .done .fg{stroke:#ffd166}
+  
   /* sheet */
-  .shade{position:fixed;inset:0;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
+  .shade{position:fixed;inset:0;background:rgba(0,0,0,.8);opacity:0;pointer-events:none;transition:opacity .25s;z-index:5}
   .shade.on{opacity:1;pointer-events:auto}
-  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#1c1c1e;border-radius:24px 24px 0 0;
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:6;background:#111;border:1px solid #3a3a3a;border-bottom:0;border-radius:24px 24px 0 0;
     padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);max-width:480px;margin:0 auto;
     transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
   .sheet.on{transform:none}
@@ -66,12 +67,12 @@
   input:focus{border-color:var(--acc)}
   input.big{font-size:32px;font-weight:700;text-align:center;padding:18px}
   .two{display:grid;grid-template-columns:1fr 90px;gap:10px}
-  .btn{width:100%;height:52px;border-radius:14px;font-weight:600;font-size:17px;background:var(--acc);color:#04170d;margin-top:4px}
-  .btn.ghost{background:var(--bg);color:var(--txt)}
+  .btn{width:100%;height:52px;border-radius:14px;font-weight:600;font-size:17px;background:#fff;color:#000;margin-top:4px}
+  .btn.ghost{background:#000;color:#fff;border:2px solid #fff}
   .btn.danger{background:none;color:var(--red);height:44px;font-weight:500;font-size:15px}
   .glist button{display:flex;justify-content:space-between;width:100%;padding:14px 0;border-bottom:1px solid var(--line);font-size:17px;text-align:left}
   .glist button span:last-child{color:var(--dim)}
-  .glist button.cur span:first-child{color:var(--acc)}
+  .glist button.cur span:first-child{text-decoration:underline;text-underline-offset:4px}
   .links{display:flex;gap:16px;justify-content:center;margin-top:10px}
   .links button{color:var(--dim);font-size:13px;padding:6px}
 </style>

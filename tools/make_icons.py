@@ -2,7 +2,7 @@
 import math, os, struct, zlib
 
 def png(size, path):
-    bg, acc, dim = (11, 11, 12), (124, 245, 180), (38, 38, 42)
+    bg, acc, dim = (0, 0, 0), (255, 255, 255), (42, 42, 42)
     cx = cy = size / 2
     r, w = size * 0.30, size * 0.075
     ss = 3  # supersampling
