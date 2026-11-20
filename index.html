@@ -18,13 +18,13 @@
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    font-family:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;font-weight:600;-webkit-font-smoothing:antialiased;
     -webkit-user-select:none;user-select:none;overscroll-behavior:none}
   #app{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;
     padding:calc(env(safe-area-inset-top) + 12px) 20px calc(env(safe-area-inset-bottom) + 20px)}
   button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
   .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .goalbtn{display:flex;align-items:center;gap:6px;font-size:17px;font-weight:600;padding:8px 0;max-width:75%}
+  .goalbtn{display:flex;align-items:center;gap:6px;font-size:20px;font-weight:800;padding:8px 0;max-width:75%}
   .goalbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .goalbtn svg{flex:none;opacity:.5}
   .icon{width:40px;height:40px;border-radius:20px;background:var(--card);display:grid;place-items:center;color:#fff}
@@ -34,22 +34,22 @@
   .ring .bg{stroke:#2a2a2a}
   .ring .fg{stroke:var(--acc);transition:stroke-dashoffset .8s cubic-bezier(.2,.8,.2,1)}
   .center{position:absolute;text-align:center;top:50%;left:50%;transform:translate(-50%,-44%)}
-  .pct{font-size:54px;font-weight:700;letter-spacing:-2px;line-height:1}
-  .pct small{font-size:22px;font-weight:600;color:var(--dim);letter-spacing:0}
-  .sub{margin-top:8px;color:var(--dim);font-size:15px}
-  .stats{display:flex;justify-content:space-between;margin:20px 0 4px;color:var(--dim);font-size:14px}
-  .stats b{display:block;color:var(--txt);font-size:18px;font-weight:600;margin-top:2px}
+  .pct{font-size:68px;font-weight:800;letter-spacing:-3px;line-height:1}
+  .pct small{font-size:26px;font-weight:700;color:var(--dim);letter-spacing:0}
+  .sub{margin-top:8px;color:var(--dim);font-size:16px;font-weight:700}
+  .stats{display:flex;justify-content:space-between;margin:20px 0 4px;color:var(--dim);font-size:14px;font-weight:700}
+  .stats b{display:block;color:var(--txt);font-size:22px;font-weight:800;margin-top:2px}
   .stats div:last-child{text-align:right}
   .actions{display:flex;gap:10px;margin:18px 0 22px}
-  .actions button{flex:1;height:54px;border-radius:16px;font-size:17px;font-weight:600}
+  .actions button{flex:1;height:56px;border-radius:16px;font-size:18px;font-weight:800}
   .add{background:#fff;color:#000}
   .sub-btn{background:#000;border:2px solid #fff}
   .add:active,.sub-btn:active{transform:scale(.97)}
-  h3{margin:0 0 6px;font-size:13px;font-weight:500;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+  h3{margin:0 0 6px;font-size:13px;font-weight:800;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
   .list{flex:1}
-  .row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
-  .row small{display:block;color:var(--dim);font-size:13px;margin-top:2px}
-  .row .a{font-weight:600;font-variant-numeric:tabular-nums}
+  .row{font-size:17px;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}
+  .row small{display:block;color:var(--dim);font-size:13px;font-weight:600;margin-top:2px}
+  .row .a{font-weight:800;font-variant-numeric:tabular-nums}
   .row .a{color:var(--grn)}
   .row .a.neg{color:var(--red)}
   .empty{color:var(--dim);text-align:center;padding:36px 0;font-size:15px}
@@ -61,20 +61,20 @@
     padding:20px 20px calc(env(safe-area-inset-bottom) + 20px);max-width:480px;margin:0 auto;
     transform:translateY(105%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
   .sheet.on{transform:none}
-  .sheet h2{margin:0 0 14px;font-size:19px}
-  input{width:100%;font:inherit;font-size:17px;color:var(--txt);background:var(--bg);border:1px solid var(--line);
+  .sheet h2{margin:0 0 14px;font-size:22px;font-weight:800}
+  input{width:100%;font:inherit;font-size:17px;font-weight:700;color:var(--txt);background:var(--bg);border:1px solid var(--line);
     border-radius:14px;padding:14px;margin-bottom:10px;outline:none;-webkit-user-select:text;user-select:text}
   input:focus{border-color:var(--acc)}
-  input.big{font-size:32px;font-weight:700;text-align:center;padding:18px}
+  input.big{font-size:36px;font-weight:800;text-align:center;padding:18px}
   .two{display:grid;grid-template-columns:1fr 90px;gap:10px}
-  .btn{width:100%;height:52px;border-radius:14px;font-weight:600;font-size:17px;background:#fff;color:#000;margin-top:4px}
+  .btn{width:100%;height:52px;border-radius:14px;font-weight:800;font-size:18px;background:#fff;color:#000;margin-top:4px}
   .btn.ghost{background:#000;color:#fff;border:2px solid #fff}
   .btn.danger{background:none;color:var(--red);height:44px;font-weight:500;font-size:15px}
-  .glist button{display:flex;justify-content:space-between;width:100%;padding:14px 0;border-bottom:1px solid var(--line);font-size:17px;text-align:left}
+  .glist button{font-weight:700;display:flex;justify-content:space-between;width:100%;padding:14px 0;border-bottom:1px solid var(--line);font-size:17px;text-align:left}
   .glist button span:last-child{color:var(--dim)}
   .glist button.cur span:first-child{text-decoration:underline;text-underline-offset:4px}
   .links{display:flex;gap:16px;justify-content:center;margin-top:10px}
-  .links button{color:var(--dim);font-size:13px;padding:6px}
+  .links button{color:var(--dim);font-weight:700;font-size:14px;padding:6px}
 </style>
 </head>
 <body>
